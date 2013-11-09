@@ -1,8 +1,9 @@
 <?php
 
 if(!defined('IN_MYBB'))
+{
 	die('This file cannot be accessed directly.');
-
+}
 
 $plugins->add_hook('admin_forum_action_handler','mybbirads_admin_action');
 $plugins->add_hook('admin_forum_menu','mybbirads_admin_forum_menu');
@@ -14,14 +15,15 @@ $plugins->add_hook('forumdisplay_start','mybbiradstasksthread');
 $plugins->add_hook("postbit", "mybbiradspostbit");
 function mybbirads_info()
 {
-
+	global $lang;
+	$lang->load('mybbirads');
 	return array(
-		"name"		=> "مدیریت تبلیغات",
-		"description"		=> "با استفاده از این سیستم شما می توانید تبلیغات خود را مدیریت فرمائید.",
+		"name"		=> $lang->mybbirads_name,
+		"description"		=> $lang->mybbirads_desc,
 		"website"		=> "http://my-bb.ir",
 		"author"		=> "AliReza_Tofighi",
 		"authorsite"		=> "http://my-bb.ir",
-		"version"		=> "نسخه 1",
+		"version"		=> "1.1",
 		"compatibility"	=> "1*"
 		);
 }
@@ -29,15 +31,15 @@ function mybbirads_info()
 
 function mybbirads_install()
 {
-	global $db, $charset;
-
+	global $db, $charset, $lang;
+	$lang->load('mybbirads');
 	$query = $db->simple_select("settinggroups", "COUNT(*) as rows");
 	$rows = $db->fetch_field($query, "rows");
 	
 	$insertarray = array(
 		'name' => 'mybbirads',
-		'title' => 'سیستم مدیریت تبلیغات',
-		'description' => 'در اینجا می توانید تبلیغات را مدیریت کنید.',
+		'title' => $lang->mybbirads_name,
+		'description' => $lang->mybbirads_desc,
 		'disporder' => $rows+1,
 		'isdefault' => 0
 	);
@@ -46,7 +48,7 @@ function mybbirads_install()
 
 		$insertarray = array(
 		'name' => 'showmybbiradsnumberrow',
-		'title' => 'در هر ردیف چند ستون تبلیغ نمایش دهد؟',
+		'title' => $lang->showmybbiradsnumberrow,
 		'description' => '',
 		'optionscode' => 'text',
 		'value' => 2,
@@ -57,7 +59,7 @@ function mybbirads_install()
 	
 			$insertarray = array(
 		'name' => 'showmybbiradsnumbertotal',
-		'title' => 'چند ستون تبلیغ نمایش داده شود؟',
+		'title' => $lang->showmybbiradsnumbertotal,
 		'description' => '',
 		'optionscode' => 'text',
 		'value' => 1,
@@ -69,7 +71,7 @@ function mybbirads_install()
 	
 			$insertarray = array(
 		'name' => 'showmybbiradsnposts',
-		'title' => 'هر چند پست یکبار تبلیغات در پست بیت نمایش داده شود.',
+		'title' => $lang->showmybbiradsnposts,
 		'description' => '',
 		'optionscode' => 'text',
 		'value' => 1,
@@ -81,7 +83,6 @@ function mybbirads_install()
 	
 	rebuild_settings();	
 	
-	// Create Tables/Settings
 	$db->write_query("
 	CREATE TABLE IF NOT EXISTS ".TABLE_PREFIX."mybbirads
 (id int(10) NOT NULL auto_increment,
@@ -123,7 +124,9 @@ function mybbirads_uninstall()
 	
 	$query = $db->query("SELECT gid FROM ".TABLE_PREFIX."settinggroups WHERE name='mybbirads' LIMIT 1");
 	$qinfo = $db->fetch_array($query);
-	$db->query("DELETE FROM ".TABLE_PREFIX."settings WHERE gid='$qinfo[gid]'");
+	if($db->num_rows($query)) {
+		$db->query("DELETE FROM ".TABLE_PREFIX."settings WHERE gid='{$qinfo['gid']}'");
+	}
 	$db->delete_query("settinggroups", "name = 'mybbirads'");
 	
 	rebuild_settings();		
@@ -185,7 +188,8 @@ function mybbirads_admin_action(&$action)
 
 function mybbirads_admin_forum_menu(&$admim_menu)
 {
-
+	global $lang;
+	$lang->load('mybbirads');
 	end($admim_menu);
 
 	$key = (key($admim_menu)) + 10;
@@ -193,7 +197,7 @@ function mybbirads_admin_forum_menu(&$admim_menu)
 	$admim_menu[$key] = array
 	(
 		'id' => 'mybbirads',
-		'title' => 'مدیریت تبلیغات',
+		'title' => $lang->mybbirads_name,
 		'link' => 'index.php?module=forum/mybbirads'
 	);
 
@@ -201,8 +205,8 @@ function mybbirads_admin_forum_menu(&$admim_menu)
 
 function mybbirads_admin()
 {
-	global $mybb, $db, $page;
-
+	global $mybb, $db, $page, $lang;
+	$lang->load('mybbirads');
 	if ($page->active_action != 'mybbirads')
 		return false;
 
@@ -211,15 +215,15 @@ function mybbirads_admin()
 	// Create Admin Tabs
 	$tabs['mybbirads'] = array
 		(
-			'title' => 'لیست تبلیغات',
+			'title' => $lang->listofads,
 			'link' =>'index.php?module=forum/mybbirads',
-			'description'=> 'در اینجا می توانید تبلیغات انجمن را مدیریت کنید'
+			'description'=> $lang->listofads_desc
 		);
 	$tabs['mybbirads_add'] = array
 		(
-			'title' => 'ایجاد تبلیغ جدید',
+			'title' => $lang->addads,
 			'link' => 'index.php?module=forum/mybbirads&action=add',
-			'description' => 'در اینجا شما می توانید یک تبلیغ اضافه کنید.'
+			'description' => $lang->addads_desc
 		);
 
 	// No action
@@ -227,8 +231,8 @@ function mybbirads_admin()
 	{
 
 
-		$page->output_header('سیستم مدیریت تبلیغات');
-		$page->add_breadcrumb_item('سیستم مدیریت تبلیغات');
+		$page->output_header($lang->mybbirads_name);
+		$page->add_breadcrumb_item($lang->mybbirads_name);
 		$page->output_nav_tabs($tabs,'mybbirads');
 
 		$table = new Table;
@@ -236,16 +240,16 @@ function mybbirads_admin()
 
 
 		$table = new Table;
-		$table->construct_header('عنوان تبلیغ');
-		$table->construct_header('لینک تبلیغ');
-		$table->construct_header('نوع تبلیغ');
-		$table->construct_header('تعداد نمایش');		
-		$table->construct_header('حداکثر نمایش');	
-		$table->construct_header('تعداد کلیک');	
-		$table->construct_header('حداکثر کلیک');	
-		$table->construct_header('ساعات باقیمانده');			
-		$table->construct_header('فعال');		
-		$table->construct_header('ویرایش');			
+		$table->construct_header($lang->subjectads);
+		$table->construct_header($lang->linkads);
+		$table->construct_header($lang->typeads);
+		$table->construct_header($lang->viewsads);		
+		$table->construct_header($lang->maxviewads);	
+		$table->construct_header($lang->clicksads);	
+		$table->construct_header($lang->maxclicksads);	
+		$table->construct_header($lang->timerads);			
+		$table->construct_header($lang->enableads);		
+		$table->construct_header($lang->edit);			
 		$query = $db->query("
 			SELECT *
 			FROM ".TABLE_PREFIX."mybbirads
@@ -255,8 +259,8 @@ function mybbirads_admin()
 		{
 
 			$table->construct_cell($ad['title']);
-			$table->construct_cell('<a href="' . $ad['url'] . '" target="_blank"><img src="' . $ad['img'] . '" width="200" height="75" /></a>');
-			if ($ad['type'] == 1) { $typeads = "بالا";} if ($ad['type'] == 2) { $typeads = "پایین";} if ($ad['type'] == 3) { $typeads = "پست بیت";}  if ($ad['type'] == 4) { $typeads = "پیچ پیل سمت راست";}  if ($ad['type'] == 5) { $typeads = "پیچ پیل سمت چپ";}   if ($ad['type'] == 6) { $typeads = "بالای لیست تایپیک ها";}    if ($ad['type'] == 7) { $typeads = "پایین لیست تایپیک ها";}    if ($ad['type'] == 8) { $typeads = "بالا سمت چپ";}    if ($ad['type'] == 9) { $typeads = "پایین سمت چپ";}    if ($ad['type'] == 10) { $typeads = "بالا سمت راست";}    if ($ad['type'] == 11) { $typeads = "پایین سمت راست";}  
+			$table->construct_cell('<a href="' . $ad['url'] . '" target="_blank"><img src="' . htmlspecialchars_uni($ad['img']) . '" width="200" height="75" /></a>');
+			if ($ad['type'] == 1) { $typeads = $lang->headerads;} if ($ad['type'] == 2) { $typeads = $lang->footerads;} if ($ad['type'] == 3) { $typeads = $lang->postbit;}  if ($ad['type'] == 4) { $typeads = $lang->pegepeelright;}  if ($ad['type'] == 5) { $typeads = $lang->pegepeelleft;}   if ($ad['type'] == 6) { $typeads = $lang->topofthreadslist;}    if ($ad['type'] == 7) { $typeads = $lang->bottomofthreadslist;}    if ($ad['type'] == 8) { $typeads = $lang->topleft;}    if ($ad['type'] == 9) { $typeads = $lang->bottomleft;}    if ($ad['type'] == 10) { $typeads = $lang->topright;}    if ($ad['type'] == 11) { $typeads = $lang->bottomright;}  
 			$table->construct_cell($typeads);
 			$table->construct_cell($ad['view']);	
 			$table->construct_cell($ad['maxview']);		
@@ -265,10 +269,10 @@ function mybbirads_admin()
 			$distime = 0; if ($ad['distime'] != 0) { $distime = ($ad['distime'] - TIME_NOW) / (60*60); }
 			$distime = round($distime, 2);
 			$table->construct_cell($distime);				
-			$table->construct_cell( ($ad['enabled'] ? 'فعال' : 'غیرفعال'));
+			$table->construct_cell( ($ad['enabled'] ? $lang->enabled : $lang->disabled));
 
 			$table->construct_cell('
-			<a href="index.php?module=forum/mybbirads&action=edit&id=' . $ad['id'] . '">ویرایش</a>&nbsp;|&nbsp; <a href="index.php?module=forum/mybbirads&action=delete&id=' . $ad['id'] . '">حذف</a>
+			<a href="index.php?module=forum/mybbirads&action=edit&id=' . $ad['id'] . '">'.$lang->edit.'</a>&nbsp;|&nbsp; <a href="index.php?module=forum/mybbirads&action=delete&id=' . $ad['id'] . '">'.$lang->delete.'</a>
 
 			');
 			$table->construct_row();
@@ -277,7 +281,7 @@ function mybbirads_admin()
 
 		if($table->num_rows() == 0)
 		{
-			$table->construct_cell('هیچ تبلیغی وجود ندارد', array('colspan' => 10));
+			$table->construct_cell($lang->thereisnoads, array('colspan' => 10));
 			$table->construct_row();
 
 		}
@@ -287,7 +291,7 @@ function mybbirads_admin()
 		$table->construct_row();
 
 
-		$table->output('مدیریت تبلیغات');
+		$table->output($lang->mybbirads_name);
 
 		$page->output_footer();
 
@@ -321,8 +325,8 @@ $distime = TIME_NOW + ($_REQUEST['distime']*(60*60));
 		}
 
 
-		$page->output_header('افزودن تبلیغ');
-		$page->add_breadcrumb_item('افزودن تبلیغ');
+		$page->output_header($lang->add);
+		$page->add_breadcrumb_item($lang->add);
 		$page->output_nav_tabs($tabs, 'mybbirads_add');
 
 
@@ -334,62 +338,62 @@ $distime = TIME_NOW + ($_REQUEST['distime']*(60*60));
 
 
 
-		$table->construct_cell('عنوان');
+		$table->construct_cell($lang->subjectads);
 		$table->construct_cell('<input type="text" size="50" name="title" value="' . $_REQUEST['title'] . '" />');
 		$table->construct_row();
 
-		$table->construct_cell('لینک');
+		$table->construct_cell($lang->linkads);
 		$table->construct_cell('<input type="text" size="50" name="url" value="' . $_REQUEST['url'] . '" />');
 		$table->construct_row();
 		
-		$table->construct_cell('آدرس تصویر');
+		$table->construct_cell($lang->imgads);
 		$table->construct_cell('<input type="text" size="50" name="img" value="' . $_REQUEST['img'] . '" />');
 		$table->construct_row();
 		
-		$table->construct_cell('نوع تبلیغ');
+		$table->construct_cell($lang->adstype);
 		$table->construct_cell('<select name="type">
-		<option value="1" >بالای سایت</option>
-		<option value="2" >پایین سایت</option>	
-		<option value="3" >پست بیت</option>		
-		<option value="4" >پیچ پیل سمت راست</option>			
-		<option value="5" >پیچ پیل سمت چپ</option>		
-		<option value="6" >بالای لیست تایپیک ها</option>		
-		<option value="7" >پایین لیست تایپیک ها</option>	
-		<option value="8" >بالا سمت چپ</option>	
-		<option value="9" >پایین سمت چپ</option>	
-		<option value="10" >بالا سمت راست</option>	
-		<option value="11" >پایین سمت راست</option>			
+		<option value="1" >'.$lang->headerads.'</option>
+		<option value="2" >'.$lang->footerads.'</option>	
+		<option value="3" >'.$lang->postbit.'/option>		
+		<option value="4" >'.$lang->pegepeelright.'</option>			
+		<option value="5" >'.$lang->pegepeelleft.'</option>		
+		<option value="6" >'.$lang->topofthreadslist.'</option>		
+		<option value="7" >'.$lang->bottomofthreadslist.'</option>	
+		<option value="8" >'.$lang->topleft.'</option>	
+		<option value="9" >'.$lang->bottomleft.'</option>	
+		<option value="10" >'.$lang->topright.'</option>	
+		<option value="11" >'.$lang->bottomright.'</option>			
 		</select>');
 		$table->construct_row();
 		
-		$table->construct_cell('تعداد نمایش ها');
+		$table->construct_cell($lang->viewsads);
 		$table->construct_cell('<input type="text" size="50" name="view" value="' . $_REQUEST['view'] . '" />');
 		$table->construct_row();
 
-		$table->construct_cell('حداکثر نمایش');
+		$table->construct_cell($lang->maxviewads);
 		$table->construct_cell('<input type="text" size="50" name="maxview" value="' . $_REQUEST['maxview'] . '" />');
 		$table->construct_row();
 		
-		$table->construct_cell('تعداد کلیک');
+		$table->construct_cell($lang->clicksads);
 		$table->construct_cell('<input type="text" size="50" name="click" value="' . $_REQUEST['click'] . '" />');
 		$table->construct_row();
 		
-		$table->construct_cell('حداکثر کلیک');
+		$table->construct_cell($lang->maxclicksads);
 		$table->construct_cell('<input type="text" size="50" name="maxclick" value="' . $_REQUEST['maxclick'] . '" />');
 		$table->construct_row();
 		
-		$table->construct_cell('ساعات باقی مانده تا پایان تبلیغ');
+		$table->construct_cell($lang->timerads);
 		$table->construct_cell('<input type="text" size="50" name="distime" value="' . $_REQUEST['distime'] . '" />');
 		$table->construct_row();		
 		
 		
 
 
-		$table->construct_cell('<input type="submit" value="افزودن تبلیغ" />', array('colspan' => 2));
+		$table->construct_cell('<input type="submit" value="'.$lang->add.'" />', array('colspan' => 2));
 		$table->construct_row();
 
 		$form->end;
-		$table->output('افزودن تبلیغ');
+		$table->output($lang->add);
 
 		$page->output_footer();
 	}
@@ -401,32 +405,27 @@ $distime = TIME_NOW + ($_REQUEST['distime']*(60*60));
 		$id = (int) $_REQUEST['id'];
 
 		$query = $db->query("
-			SELECT
-				*
+			SELECT *
 			FROM ".TABLE_PREFIX."mybbirads
-
-			WHERE id = $id LIMIT 1
+			WHERE id = '{$id}' LIMIT 1
 		");
 		$adsRow = $db->fetch_array($query);
-
-
-
 
 		if ($mybb->input['action'] == 'edit2')
 		{
 			$id = (int) $_REQUEST['id'];
 
-if ($_REQUEST['distime'] != 0)
-{
-$distime = TIME_NOW + ($_REQUEST['distime']*(60*60));
-}
+			if ($_REQUEST['distime'] != 0)
+			{
+				$distime = TIME_NOW + ($_REQUEST['distime']*(60*60));
+			}
 				$db->write_query("
-		UPDATE ".TABLE_PREFIX."mybbirads
-		SET
-			 	title = '".$_REQUEST['title']."', url = '".$_REQUEST['url']."', enabled = '".$_REQUEST['enabled']."',
-		  	img = '".$_REQUEST['img']."', view = '".$_REQUEST['view']."', maxview = '".$_REQUEST['maxview']."',
-		  	click = '".$_REQUEST['click']."',maxclick = '".$_REQUEST['maxclick']."', type = '".$_REQUEST['type']."', distime = '".$distime."'
-	    WHERE id = $id LIMIT 1"
+					UPDATE ".TABLE_PREFIX."mybbirads
+					SET
+							title = '".$_REQUEST['title']."', url = '".$_REQUEST['url']."', enabled = '".$_REQUEST['enabled']."',
+						img = '".$_REQUEST['img']."', view = '".$_REQUEST['view']."', maxview = '".$_REQUEST['maxview']."',
+						click = '".$_REQUEST['click']."',maxclick = '".$_REQUEST['maxclick']."', type = '".$_REQUEST['type']."', distime = '".$distime."'
+					WHERE id = $id LIMIT 1"
 
 				);
 
@@ -437,8 +436,8 @@ $distime = TIME_NOW + ($_REQUEST['distime']*(60*60));
 		}
 
 
-		$page->output_header('ویرایش تبلیغ');
-		$page->add_breadcrumb_item('ویرایش تبلیغ');
+		$page->output_header($lang->edit);
+		$page->add_breadcrumb_item($lang->edit);
 		$page->output_nav_tabs($tabs, 'mybbirads');
 
 
@@ -452,15 +451,15 @@ $distime = TIME_NOW + ($_REQUEST['distime']*(60*60));
 
 	
 
-		$table->construct_cell('عنوان');
+		$table->construct_cell($lang->subjectads);
 		$table->construct_cell('<input type="text" size="50" name="title" value="' . $adsRow['title'] . '" />');
 		$table->construct_row();
 
-		$table->construct_cell('لینک');
+		$table->construct_cell($lang->linkads);
 		$table->construct_cell('<input type="text" size="50" name="url" value="' . $adsRow['url'] . '" />');
 		$table->construct_row();
 		
-		$table->construct_cell('آدرس تصویر');
+		$table->construct_cell($lang->imgads);
 		$table->construct_cell('<input type="text" size="50" name="img" value="' . $adsRow['img'] . '" />');
 		$table->construct_row();
 		if ($adsRow['type'] == 1) {$type1 = "selected";}
@@ -474,35 +473,35 @@ $distime = TIME_NOW + ($_REQUEST['distime']*(60*60));
 		if ($adsRow['type'] == 9) {$type9 = "selected";}	
 		if ($adsRow['type'] == 10) {$type10 = "selected";}	
 		if ($adsRow['type'] == 11) {$type11 = "selected";}			
-		$table->construct_cell('نوع تبلیغ');
+		$table->construct_cell($lang->typeads);
 		$table->construct_cell('<select name="type">
-		<option value="1" '.$type1.'>بالای سایت</option>
-		<option value="2" '.$type2.'>پایین سایت</option>		
-		<option value="3" '.$type3.'>پست بیت</option>		
-		<option value="4" '.$type4.'>پیج پیل سمت راست</option>				
-		<option value="5" '.$type5.'>پیج پیل سمت چپ</option>	
-		<option value="6" '.$type6.'>بالای لیست تایپیک ها</option>		
-		<option value="7" '.$type7.'>پایین لیست تایپیک ها</option>	
-		<option value="8" '.$type8.'>بالا سمت چپ</option>	
-		<option value="9" '.$type9.'>پایین سمت چپ</option>	
-		<option value="10" '.$type10.'>بالا سمت راست</option>	
-		<option value="11" '.$type11.'>پایین سمت راست</option>				
+		<option value="1" '.$type1.'>'.$lang->headerads.'</option>
+		<option value="2" '.$type2.'>'.$lang->footerads.'</option>		
+		<option value="3" '.$type3.'>'.$lang->postbit.'</option>		
+		<option value="4" '.$type4.'>'.$lang->pegepeelright.'</option>				
+		<option value="5" '.$type5.'>'.$lang->pegepeelleft.'</option>	
+		<option value="6" '.$type6.'>'.$lang->topofthreadslist.'</option>		
+		<option value="7" '.$type7.'>'.$lang->bottomofthreadslist.'</option>	
+		<option value="8" '.$type8.'>'.$lang->topleft.'</option>	
+		<option value="9" '.$type9.'>'.$lang->bottomleft.'</option>	
+		<option value="10" '.$type10.'>'.$lang->topright.'</option>	
+		<option value="11" '.$type11.'>'.$lang->bottomright.'</option>				
 		</select>');
 		$table->construct_row();
 		
-		$table->construct_cell('تعداد نمایش ها');
+		$table->construct_cell($lang->viewsads);
 		$table->construct_cell('<input type="text" size="50" name="view" value="' . $adsRow['view'] . '" />');
 		$table->construct_row();
 
-		$table->construct_cell('حداکثر نمایش');
+		$table->construct_cell($lang->maxviewads);
 		$table->construct_cell('<input type="text" size="50" name="maxview" value="' . $adsRow['maxview'] . '" />');
 		$table->construct_row();
 		
-		$table->construct_cell('تعداد کلیک');
+		$table->construct_cell($lang->clicksads);
 		$table->construct_cell('<input type="text" size="50" name="click" value="' . $adsRow['click'] . '" />');
 		$table->construct_row();
 		
-		$table->construct_cell('حداکثر کلیک');
+		$table->construct_cell($lang->maxclicksads);
 		$table->construct_cell('<input type="text" size="50" name="maxclick" value="' . $adsRow['maxclick'] . '" />');
 		$table->construct_row();		
 
@@ -510,16 +509,16 @@ $distime = TIME_NOW + ($_REQUEST['distime']*(60*60));
 		{
 		$distimea = ($adsRow['distime']-TIME_NOW)/(60*60); } else { $distimea = 0;}
 			$distimea = round($distimea, 2);		
-		$table->construct_cell('ساعات باقی مانده');
+		$table->construct_cell($lang->timerads);
 		$table->construct_cell('<input type="text" size="50" name="distime" value="' . $distimea . '" />');
 		$table->construct_row();		
 		
 				if ($adsRow['enabled'] == 1) {$enabled1 = "selected";}
 		if ($adsRow['enabled'] == 0) {$enabled2 = "selected";}
-		$table->construct_cell('فعال');
+		$table->construct_cell($lang->enableads);
 		$table->construct_cell('<select name="enabled">
-		<option value="1" '.$enabled1.'>فعال</option>
-		<option value="0" '.$enabled2.'>غیر فعال</option>		
+		<option value="1" '.$enabled1.'>'.$lang->enabled.'</option>
+		<option value="0" '.$enabled2.'>'.$lang->disabled.'</option>		
 		</select>');
 		$table->construct_row();
 		
@@ -527,11 +526,11 @@ $distime = TIME_NOW + ($_REQUEST['distime']*(60*60));
 
 		$table->construct_cell('
 		<input type="hidden" name="id" value="' . $id . '" />
-		<input type="submit" value="ویرایش تبلیغ" />', array('colspan' => 2));
+		<input type="submit" value="'.$lang->edit.'" />', array('colspan' => 2));
 		$table->construct_row();		
 
 		$form->end;
-		$table->output('ویرایش تبلیغ');
+		$table->output($lang->edit);
 
 		$page->output_footer();
 
@@ -546,9 +545,6 @@ $distime = TIME_NOW + ($_REQUEST['distime']*(60*60));
 		$db->write_query("DELETE FROM ".TABLE_PREFIX."mybbirads  WHERE id = $id
 				");
 
-
-
-
 		admin_redirect("index.php?module=forum/mybbirads");
 	}
 
@@ -559,49 +555,48 @@ $distime = TIME_NOW + ($_REQUEST['distime']*(60*60));
 
 function mybbiradstasks()
 {
-global $mybb, $db, $settings;
+	global $mybb, $db, $settings;
 
-// task mybbir ads
+	// task mybbir ads
 
-$queryview = $db->query("SELECT * FROM ".TABLE_PREFIX."mybbirads  WHERE maxview != 0 and enabled = 1");
+	$queryview = $db->query("SELECT * FROM ".TABLE_PREFIX."mybbirads  WHERE maxview != 0 and enabled = 1");
 
-while($mybbiradsview = $db->fetch_array($queryview))
-{
-if ($mybbiradsview['maxview'] <= $mybbiradsview['view'])
-{
-$db->write_query("
-		UPDATE ".TABLE_PREFIX."mybbirads
-		SET enabled = 0
-	    WHERE id = ".$mybbiradsview['id']." LIMIT 1");
-}
-}
+	while($mybbiradsview = $db->fetch_array($queryview))
+	{
+		if ($mybbiradsview['maxview'] <= $mybbiradsview['view'])
+		{
+			$db->write_query("
+					UPDATE ".TABLE_PREFIX."mybbirads
+					SET enabled = 0
+					WHERE id = ".$mybbiradsview['id']." LIMIT 1");
+		}
+	}
 
 
-$queryclick = $db->query("SELECT * FROM ".TABLE_PREFIX."mybbirads  WHERE maxclick != 0 and enabled = 1");
+	$queryclick = $db->query("SELECT * FROM ".TABLE_PREFIX."mybbirads  WHERE maxclick != 0 and enabled = 1");
 
-while($mybbiradsclick = $db->fetch_array($queryclick))
-{
-if ($mybbiradsclick['maxclick'] <= $mybbiradsclick['click'])
-{
-$db->write_query("
-		UPDATE ".TABLE_PREFIX."mybbirads
-		SET enabled = 0
-	    WHERE id = ".$mybbiradsclick['id']." LIMIT 1");
-}
-}
+	while($mybbiradsclick = $db->fetch_array($queryclick))
+	{
+		if ($mybbiradsclick['maxclick'] <= $mybbiradsclick['click'])
+		{
+			$db->write_query("
+					UPDATE ".TABLE_PREFIX."mybbirads
+					SET enabled = 0
+					WHERE id = ".$mybbiradsclick['id']." LIMIT 1");
+		}
+	}
 
-$querytime = $db->query("SELECT * FROM ".TABLE_PREFIX."mybbirads  WHERE distime != 0 and enabled = 1");
-
-while($mybbiradstime = $db->fetch_array($querytime))
-{
-if ($mybbiradstime['distime'] <= TIME_NOW)
-{
-$db->write_query("
-		UPDATE ".TABLE_PREFIX."mybbirads
-		SET enabled = 0
-	    WHERE id = ".$mybbiradstime['id']." LIMIT 1");
-}
-}
+	$querytime = $db->query("SELECT * FROM ".TABLE_PREFIX."mybbirads  WHERE distime != 0 and enabled = 1");
+	while($mybbiradstime = $db->fetch_array($querytime))
+	{
+		if ($mybbiradstime['distime'] <= TIME_NOW)
+		{
+			$db->write_query("
+					UPDATE ".TABLE_PREFIX."mybbirads
+					SET enabled = 0
+					WHERE id = ".$mybbiradstime['id']." LIMIT 1");
+		}
+	}
 
 }
 
@@ -610,7 +605,7 @@ function get_mybbirads($type, $max=0)
 	global $mybb, $db;
 	$showadshead = "";
 	if ($db->num_rows($db->query("SELECT * FROM ".TABLE_PREFIX."mybbirads  WHERE type= ".$type." and enabled = 1")) > 0) {
-		$showadshead .= "<table class=\"tborder\"><tr><td class=\"thead\"  colspan=\"".$mybb->settings['showmybbiradsnumberrow']."\">تبلیغات</td></tr>";
+		$showadshead .= "<table class=\"tborder\"><tr><td class=\"thead\"  colspan=\"".$mybb->settings['showmybbiradsnumberrow']."\">{$lang->ads}</td></tr>";
 		for ($i = 1 ; $i <= $mybb->settings['showmybbiradsnumbertotal'] ; $i++)
 		{
 			$showadshead .= "<tr>";
@@ -634,15 +629,12 @@ function get_mybbirads($type, $max=0)
 
 function mybbirads()
 {
-global $mybb, $db, $settings, $showadshead, $showadsfoot;
+	global $mybb, $db, $settings, $showadshead, $showadsfoot;
+	// header
+	$showadshead = get_mybbirads(1);
 
-// header
-$showadshead = get_mybbirads(1);
-
-
-// footer
-$showadsfoot = get_mybbirads(2);
-
+	// footer
+	$showadsfoot = get_mybbirads(2);
 }
 
 function mybbiradspostbit(&$post) 
@@ -665,7 +657,7 @@ function mybbiradspostbit(&$post)
 
 function mybbiradstasksthread() 
 {
-	global $mybb, $db, $settings, $mybbiradsthlisthead, $mybbiradsthlistfoot;
+	global $mybb, $mybbiradsthlisthead, $mybbiradsthlistfoot;
 	$mybbiradsthlisthead = get_mybbirads(6);
 	$mybbiradsthlistfoot = get_mybbirads(7);
 }
@@ -673,209 +665,203 @@ function mybbiradstasksthread()
 
 function mybbiradspagepeel() 
 {
-global $mybb, $db, $settings, $mybbiradspagepeelright, $mybbiradspagepeelleft, $mybbiradsgooshe;
+	global $mybb, $db, $settings, $mybbiradspagepeelright, $mybbiradspagepeelleft, $mybbiradsgooshe;
+	// pagepeelright
+	if (get_mybbirads(4)) {
+		$querymybbir = $db->query("SELECT * FROM ".TABLE_PREFIX."mybbirads  WHERE type= 4 and enabled = 1 ORDER BY RAND() LIMIT 1");
+		while($mybbirads = $db->fetch_array($querymybbir))
+		{
+			$mybbiradspagepeelright = "<style type=\"text/css\"> 
+			.pagepeelright a {
+				position:fixed;
+				top:0;
+				right:0;
+				width:100px;
+				height:100px;
+				transition:width 2s, height 2s, background 2s;
+				-moz-transition:width 2s, height 2s, background 2s; /* Firefox 4 */
+				-webkit-transition:width 2s, height 2s, background 2s; /* Safari and Chrome */
+				-o-transition:width 2s, height 2s, background 2s; /* Opera */
+				background:url(images/pagepeel_r.png);
+			}
 
+			.pagepeelright a:hover
+			{
+				width:500px;
+				height:500px;
+			}
 
-// pagepeelright
-if (get_mybbirads(4)) {
-$querymybbir = $db->query("SELECT * FROM ".TABLE_PREFIX."mybbirads  WHERE type= 4 and enabled = 1 ORDER BY RAND() LIMIT 1");
-while($mybbirads = $db->fetch_array($querymybbir))
-{
-$mybbiradspagepeelright = "<style type=\"text/css\"> 
-.pagepeelright a
-{
-position:fixed;
- top:0;
- right:0;
-width:100px;
-height:100px;
-transition:width 2s, height 2s, background 2s;
--moz-transition:width 2s, height 2s, background 2s; /* Firefox 4 */
--webkit-transition:width 2s, height 2s, background 2s; /* Safari and Chrome */
--o-transition:width 2s, height 2s, background 2s; /* Opera */
-background:url(images/pagepeel_r.png);
+			.pagepeelright:hover
+			{
+				width:500px;
+				height:500px;
+				background-size:500px 500px;
+				-moz-background-size:500px 500px; /* Firefox 3.6 */
+				background-repeat:no-repeat;
+				transition:width 2s, height 2s;
+				-moz-transition:width 2s, height 2s; /* Firefox 4 */
+				-webkit-transition:width 2s, height 2s; /* Safari and Chrome */
+				-o-transition:width 2s, height 2s; /* Opera */
+			}
 
+			.pagepeelright 
+			{
+				background:url(".$mybbirads['img'].") top right;
+				background-size:100px 100px;
+				-moz-background-size:100px 100px; /* Firefox 3.6 */
+				background-repeat:no-repeat;
+				position:fixed;
+				 top:0;
+				 right:0;
+				width:100px;
+				height:100px;
+				border-bottom-left-radius:100px;
+				transition:width 2s, height 2s, background 2s;
+				-moz-transition:width 2s, height 2s, background 2s; /* Firefox 4 */
+				-webkit-transition:width 2s, height 2s, background 2s; /* Safari and Chrome */
+				-o-transition:width 2s, height 2s, background 2s; /* Opera */
+				background-size:500px 500px;
+				-moz-background-size:500px 500px; /* Firefox 3.6 */
+			}
+			</style>
+			<div class=\"pagepeelright\"><a href=\"mybbirads.php?id=".$mybbirads['id']."\" target=\"_blank\" title=\"".$mybbirads['title']."\"></a></div>";
+			$addview = "";
+			$addview = $mybbirads['view']+1;
+			$db->write_query("
+					UPDATE ".TABLE_PREFIX."mybbirads
+					SET view = '".$addview."'
+					WHERE id = ".$mybbirads['id']." LIMIT 1");
+		}
+	}
 
-}
+	//pagepeelleft
 
-.pagepeelright a:hover
-{
-width:500px;
-height:500px;
-}
+	if (get_mybbirads(5)) {
 
-.pagepeelright:hover
-{
-width:500px;
-height:500px;
-background-size:500px 500px;
--moz-background-size:500px 500px; /* Firefox 3.6 */
-background-repeat:no-repeat;
-transition:width 2s, height 2s;
--moz-transition:width 2s, height 2s; /* Firefox 4 */
--webkit-transition:width 2s, height 2s; /* Safari and Chrome */
--o-transition:width 2s, height 2s; /* Opera */
-}
+		$querymybbir = $db->query("SELECT * FROM ".TABLE_PREFIX."mybbirads  WHERE type= 5 and enabled = 1 ORDER BY RAND() LIMIT 1");
+		while($mybbirads = $db->fetch_array($querymybbir))
+		{
+			$mybbiradspagepeelleft = "<style type=\"text/css\"> 
+			.pagepeelleft a
+			{
+			position:fixed;
+			 top:0;
+			 left:0;
+			width:100px;
+			height:100px;
+			transition:width 2s, height 2s, background 2s;
+			-moz-transition:width 2s, height 2s, background 2s; /* Firefox 4 */
+			-webkit-transition:width 2s, height 2s, background 2s; /* Safari and Chrome */
+			-o-transition:width 2s, height 2s, background 2s; /* Opera */
+			background:url(images/pagepeel_l.png) top left;
+			background-repeat:no-repeat;
+			background-size:99px 100px;
+			-moz-background-size:99px 100px; /* Firefox 3.6 */
 
-.pagepeelright 
-{
-background:url(".$mybbirads['img'].") top right;
-background-size:100px 100px;
--moz-background-size:100px 100px; /* Firefox 3.6 */
-background-repeat:no-repeat;
-position:fixed;
- top:0;
- right:0;
-width:100px;
-height:100px;
-border-bottom-left-radius:100px;
-transition:width 2s, height 2s, background 2s;
--moz-transition:width 2s, height 2s, background 2s; /* Firefox 4 */
--webkit-transition:width 2s, height 2s, background 2s; /* Safari and Chrome */
--o-transition:width 2s, height 2s, background 2s; /* Opera */
-background-size:500px 500px;
--moz-background-size:500px 500px; /* Firefox 3.6 */
-}
-</style>
-<div class=\"pagepeelright\"><a href=\"mybbirads.php?id=".$mybbirads['id']."\" target=\"_blank\" title=\"".$mybbirads['title']."\"></a></div>";
-$addview = "";
-$addview = $mybbirads['view']+1;
-$db->write_query("
-		UPDATE ".TABLE_PREFIX."mybbirads
-		SET view = '".$addview."'
-	    WHERE id = ".$mybbirads['id']." LIMIT 1");
-}
-}
+			}
 
-//pagepeelleft
+			.pagepeelleft a:hover
+			{
+			width:500px;
+			height:500px;
+			background-size:500px 520px;
+			-moz-background-size:500px 520px; /* Firefox 3.6 */
+			}
 
-if (get_mybbirads(5)) {
+			.pagepeelleft:hover
+			{
+			width:500px;
+			height:500px;
+			background-size:500px 500px;
+			-moz-background-size:500px 500px; /* Firefox 3.6 */
+			background-repeat:no-repeat;
+			transition:width 2s, height 2s;
+			-moz-transition:width 2s, height 2s; /* Firefox 4 */
+			-webkit-transition:width 2s, height 2s; /* Safari and Chrome */
+			-o-transition:width 2s, height 2s; /* Opera */
+			}
 
-$querymybbir = $db->query("SELECT * FROM ".TABLE_PREFIX."mybbirads  WHERE type= 5 and enabled = 1 ORDER BY RAND() LIMIT 1");
-while($mybbirads = $db->fetch_array($querymybbir))
-{
-$mybbiradspagepeelleft = "<style type=\"text/css\"> 
-.pagepeelleft a
-{
-position:fixed;
- top:0;
- left:0;
-width:100px;
-height:100px;
-transition:width 2s, height 2s, background 2s;
--moz-transition:width 2s, height 2s, background 2s; /* Firefox 4 */
--webkit-transition:width 2s, height 2s, background 2s; /* Safari and Chrome */
--o-transition:width 2s, height 2s, background 2s; /* Opera */
-background:url(images/pagepeel_l.png) top left;
-background-repeat:no-repeat;
-background-size:99px 100px;
--moz-background-size:99px 100px; /* Firefox 3.6 */
+			.pagepeelleft 
+			{
+			background:url(".$mybbirads['img'].") top left;
+			background-size:9px 9px;
+			-moz-background-size:9px 9px; /* Firefox 3.6 */
+			background-repeat:no-repeat;
+			position:fixed;
+			 top:0;
+			 left:0;
+			width:99px;
+			height:94px;
+			border-bottom-right-radius:100px;
+			transition:width 2s, height 2s, background 2s;
+			-moz-transition:width 2s, height 2s, background 2s; /* Firefox 4 */
+			-webkit-transition:width 2s, height 2s, background 2s; /* Safari and Chrome */
+			-o-transition:width 2s, height 2s, background 2s; /* Opera */
+			background-size:500px 500px;
+			-moz-background-size:500px 500px; /* Firefox 3.6 */
+			}
 
-}
+			</style>
+			<div class=\"pagepeelleft\"><a href=\"mybbirads.php?id=".$mybbirads['id']."\" target=\"_blank\" title=\"".$mybbirads['title']."\"></a></div>";
+			$addview = "";
+			$addview = $mybbirads['view']+1;
+			$db->write_query("
+					UPDATE ".TABLE_PREFIX."mybbirads
+					SET view = '".$addview."'
+					WHERE id = ".$mybbirads['id']." LIMIT 1");
+		}
+	}
 
-.pagepeelleft a:hover
-{
-width:500px;
-height:500px;
-background-size:500px 520px;
--moz-background-size:500px 520px; /* Firefox 3.6 */
-}
+	$querymybbir = $db->query("SELECT * FROM ".TABLE_PREFIX."mybbirads  WHERE type= 10 and enabled = 1 ORDER BY RAND() LIMIT 1");
+	while($mybbirads = $db->fetch_array($querymybbir))
+	{
+		list($adsmybbirwidth, $adsmybbirheight) = getimagesize($mybbirads['img']);
+		$mybbiradsgooshe .= "<div><a href=\"mybbirads.php?id=".$mybbirads['id']."\" target=\"_blank\" title=\"".$mybbirads['title']."\" style=\"position:fixed;top:0;right:0;width:".$adsmybbirwidth."px;height:".$adsmybbirheight."px;background:url(".$mybbirads['img'].") top right;\"></a></div>";
+		$addview = "";
+		$addview = $mybbirads['view']+1;
+		$db->write_query("
+				UPDATE ".TABLE_PREFIX."mybbirads
+				SET view = '".$addview."'
+				WHERE id = ".$mybbirads['id']." LIMIT 1");
+	}
 
-.pagepeelleft:hover
-{
-width:500px;
-height:500px;
-background-size:500px 500px;
--moz-background-size:500px 500px; /* Firefox 3.6 */
-background-repeat:no-repeat;
-transition:width 2s, height 2s;
--moz-transition:width 2s, height 2s; /* Firefox 4 */
--webkit-transition:width 2s, height 2s; /* Safari and Chrome */
--o-transition:width 2s, height 2s; /* Opera */
-}
+	$querymybbir = $db->query("SELECT * FROM ".TABLE_PREFIX."mybbirads  WHERE type= 11 and enabled = 1 ORDER BY RAND() LIMIT 1");
+	while($mybbirads = $db->fetch_array($querymybbir))
+	{
+		list($adsmybbirwidth, $adsmybbirheight) = getimagesize($mybbirads['img']);
+		$mybbiradsgooshe .= "<div><a href=\"mybbirads.php?id=".$mybbirads['id']."\" target=\"_blank\" title=\"".$mybbirads['title']."\" style=\"position:fixed;bottom:0;right:0;width:".$adsmybbirwidth."px;height:".$adsmybbirheight."px;background:url(".$mybbirads['img'].") bottom right;\"></a></div>";
+		$addview = "";
+		$addview = $mybbirads['view']+1;
+		$db->write_query("
+				UPDATE ".TABLE_PREFIX."mybbirads
+				SET view = '".$addview."'
+				WHERE id = ".$mybbirads['id']." LIMIT 1");
+	}
 
-.pagepeelleft 
-{
-background:url(".$mybbirads['img'].") top left;
-background-size:9px 9px;
--moz-background-size:9px 9px; /* Firefox 3.6 */
-background-repeat:no-repeat;
-position:fixed;
- top:0;
- left:0;
-width:99px;
-height:94px;
-border-bottom-right-radius:100px;
-transition:width 2s, height 2s, background 2s;
--moz-transition:width 2s, height 2s, background 2s; /* Firefox 4 */
--webkit-transition:width 2s, height 2s, background 2s; /* Safari and Chrome */
--o-transition:width 2s, height 2s, background 2s; /* Opera */
-background-size:500px 500px;
--moz-background-size:500px 500px; /* Firefox 3.6 */
-}
+	$querymybbir = $db->query("SELECT * FROM ".TABLE_PREFIX."mybbirads  WHERE type= 8 and enabled = 1 ORDER BY RAND() LIMIT 1");
+	while($mybbirads = $db->fetch_array($querymybbir))
+	{
+		list($adsmybbirwidth, $adsmybbirheight) = getimagesize($mybbirads['img']);
+		$mybbiradsgooshe .= "<div><a href=\"mybbirads.php?id=".$mybbirads['id']."\" target=\"_blank\" title=\"".$mybbirads['title']."\" style=\"position:fixed;top:0;left:0;width:".$adsmybbirwidth."px;height:".$adsmybbirheight."px;background:url(".$mybbirads['img'].") top left;\"></a></div>";
+		$addview = "";
+		$addview = $mybbirads['view']+1;
+		$db->write_query("
+				UPDATE ".TABLE_PREFIX."mybbirads
+				SET view = '".$addview."'
+				WHERE id = ".$mybbirads['id']." LIMIT 1");
+	}
 
-</style>
-<div class=\"pagepeelleft\"><a href=\"mybbirads.php?id=".$mybbirads['id']."\" target=\"_blank\" title=\"".$mybbirads['title']."\"></a></div>";
-$addview = "";
-$addview = $mybbirads['view']+1;
-$db->write_query("
-		UPDATE ".TABLE_PREFIX."mybbirads
-		SET view = '".$addview."'
-	    WHERE id = ".$mybbirads['id']." LIMIT 1");
-}
-}
-
-$querymybbir = $db->query("SELECT * FROM ".TABLE_PREFIX."mybbirads  WHERE type= 10 and enabled = 1 ORDER BY RAND() LIMIT 1");
-while($mybbirads = $db->fetch_array($querymybbir))
-{
-list($adsmybbirwidth, $adsmybbirheight) = getimagesize($mybbirads['img']);
-$mybbiradsgooshe .= "<div><a href=\"mybbirads.php?id=".$mybbirads['id']."\" target=\"_blank\" title=\"".$mybbirads['title']."\" style=\"position:fixed;top:0;right:0;width:".$adsmybbirwidth."px;height:".$adsmybbirheight."px;background:url(".$mybbirads['img'].") top right;\"></a></div>";
-$addview = "";
-$addview = $mybbirads['view']+1;
-$db->write_query("
-		UPDATE ".TABLE_PREFIX."mybbirads
-		SET view = '".$addview."'
-	    WHERE id = ".$mybbirads['id']." LIMIT 1");
-}
-
-$querymybbir = $db->query("SELECT * FROM ".TABLE_PREFIX."mybbirads  WHERE type= 11 and enabled = 1 ORDER BY RAND() LIMIT 1");
-while($mybbirads = $db->fetch_array($querymybbir))
-{
-list($adsmybbirwidth, $adsmybbirheight) = getimagesize($mybbirads['img']);
-$mybbiradsgooshe .= "<div><a href=\"mybbirads.php?id=".$mybbirads['id']."\" target=\"_blank\" title=\"".$mybbirads['title']."\" style=\"position:fixed;bottom:0;right:0;width:".$adsmybbirwidth."px;height:".$adsmybbirheight."px;background:url(".$mybbirads['img'].") bottom right;\"></a></div>";
-$addview = "";
-$addview = $mybbirads['view']+1;
-$db->write_query("
-		UPDATE ".TABLE_PREFIX."mybbirads
-		SET view = '".$addview."'
-	    WHERE id = ".$mybbirads['id']." LIMIT 1");
-}
-
-$querymybbir = $db->query("SELECT * FROM ".TABLE_PREFIX."mybbirads  WHERE type= 8 and enabled = 1 ORDER BY RAND() LIMIT 1");
-while($mybbirads = $db->fetch_array($querymybbir))
-{
-list($adsmybbirwidth, $adsmybbirheight) = getimagesize($mybbirads['img']);
-$mybbiradsgooshe .= "<div><a href=\"mybbirads.php?id=".$mybbirads['id']."\" target=\"_blank\" title=\"".$mybbirads['title']."\" style=\"position:fixed;top:0;left:0;width:".$adsmybbirwidth."px;height:".$adsmybbirheight."px;background:url(".$mybbirads['img'].") top left;\"></a></div>";
-$addview = "";
-$addview = $mybbirads['view']+1;
-$db->write_query("
-		UPDATE ".TABLE_PREFIX."mybbirads
-		SET view = '".$addview."'
-	    WHERE id = ".$mybbirads['id']." LIMIT 1");
-}
-
-$querymybbir = $db->query("SELECT * FROM ".TABLE_PREFIX."mybbirads  WHERE type= 9 and enabled = 1 ORDER BY RAND() LIMIT 1");
-while($mybbirads = $db->fetch_array($querymybbir))
-{
-list($adsmybbirwidth, $adsmybbirheight) = getimagesize($mybbirads['img']);
-$mybbiradsgooshe .= "<div><a href=\"mybbirads.php?id=".$mybbirads['id']."\" target=\"_blank\" title=\"".$mybbirads['title']."\" style=\"position:fixed;bottom:0;left:0;width:".$adsmybbirwidth."px;height:".$adsmybbirheight."px;background:url(".$mybbirads['img'].") bottom left;\"></a></div>";
-$addview = "";
-$addview = $mybbirads['view']+1;
-$db->write_query("
-		UPDATE ".TABLE_PREFIX."mybbirads
-		SET view = '".$addview."'
-	    WHERE id = ".$mybbirads['id']." LIMIT 1");
-}
-
+	$querymybbir = $db->query("SELECT * FROM ".TABLE_PREFIX."mybbirads  WHERE type= 9 and enabled = 1 ORDER BY RAND() LIMIT 1");
+	while($mybbirads = $db->fetch_array($querymybbir))
+	{
+		list($adsmybbirwidth, $adsmybbirheight) = getimagesize($mybbirads['img']);
+		$mybbiradsgooshe .= "<div><a href=\"mybbirads.php?id=".$mybbirads['id']."\" target=\"_blank\" title=\"".$mybbirads['title']."\" style=\"position:fixed;bottom:0;left:0;width:".$adsmybbirwidth."px;height:".$adsmybbirheight."px;background:url(".$mybbirads['img'].") bottom left;\"></a></div>";
+		$addview = "";
+		$addview = $mybbirads['view']+1;
+		$db->write_query("
+				UPDATE ".TABLE_PREFIX."mybbirads
+				SET view = '".$addview."'
+				WHERE id = ".$mybbirads['id']." LIMIT 1");
+	}
 }
 ?>
