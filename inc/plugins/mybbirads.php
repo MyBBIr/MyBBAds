@@ -249,7 +249,7 @@ function mybbirads_admin()
 		$table->construct_header($lang->maxclicksads);	
 		$table->construct_header($lang->timerads);			
 		$table->construct_header($lang->enableads);		
-		$table->construct_header($lang->edit);			
+		$table->construct_header($lang->editads);			
 		$query = $db->query("
 			SELECT *
 			FROM ".TABLE_PREFIX."mybbirads
@@ -259,20 +259,20 @@ function mybbirads_admin()
 		{
 
 			$table->construct_cell($ad['title']);
-			$table->construct_cell('<a href="' . $ad['url'] . '" target="_blank"><img src="' . htmlspecialchars_uni($ad['img']) . '" width="200" height="75" /></a>');
+			$table->construct_cell('<a href="' . htmlspecialchars_uni($ad['url']) . '" target="_blank"><img src="' . htmlspecialchars_uni($ad['img']) . '" width="200" height="75" /></a>');
 			if ($ad['type'] == 1) { $typeads = $lang->headerads;} if ($ad['type'] == 2) { $typeads = $lang->footerads;} if ($ad['type'] == 3) { $typeads = $lang->postbit;}  if ($ad['type'] == 4) { $typeads = $lang->pegepeelright;}  if ($ad['type'] == 5) { $typeads = $lang->pegepeelleft;}   if ($ad['type'] == 6) { $typeads = $lang->topofthreadslist;}    if ($ad['type'] == 7) { $typeads = $lang->bottomofthreadslist;}    if ($ad['type'] == 8) { $typeads = $lang->topleft;}    if ($ad['type'] == 9) { $typeads = $lang->bottomleft;}    if ($ad['type'] == 10) { $typeads = $lang->topright;}    if ($ad['type'] == 11) { $typeads = $lang->bottomright;}  
 			$table->construct_cell($typeads);
-			$table->construct_cell($ad['view']);	
-			$table->construct_cell($ad['maxview']);		
-			$table->construct_cell($ad['click']);	
-			$table->construct_cell($ad['maxclick']);	
-			$distime = 0; if ($ad['distime'] != 0) { $distime = ($ad['distime'] - TIME_NOW) / (60*60); }
+			$table->construct_cell(intval($ad['view']));	
+			$table->construct_cell(intval($ad['maxview']));		
+			$table->construct_cell(intval($ad['click']));	
+			$table->construct_cell(intval($ad['maxclick']));	
+			$distime = 0; if (intval($ad['distime']) != 0) { $distime = (intval($ad['distime']) - TIME_NOW) / (60*60); }
 			$distime = round($distime, 2);
 			$table->construct_cell($distime);				
 			$table->construct_cell( ($ad['enabled'] ? $lang->enabled : $lang->disabled));
 
 			$table->construct_cell('
-			<a href="index.php?module=forum/mybbirads&action=edit&id=' . $ad['id'] . '">'.$lang->edit.'</a>&nbsp;|&nbsp; <a href="index.php?module=forum/mybbirads&action=delete&id=' . $ad['id'] . '">'.$lang->delete.'</a>
+			<a href="index.php?module=forum/mybbirads&action=edit&id=' . intval($ad['id']) . '">'.$lang->editads.'</a> &nbsp;|&nbsp; <a href="index.php?module=forum/mybbirads&action=delete&id=' . intval($ad['id']) . '">'.$lang->delete.'</a>
 
 			');
 			$table->construct_row();
@@ -294,28 +294,23 @@ function mybbirads_admin()
 		$table->output($lang->mybbirads_name);
 
 		$page->output_footer();
-
-
-
 	}
-
-	// Add Menu
-	if ($mybb->input['action'] == 'add' || $mybb->input['action'] == 'add2')
+	elseif ($mybb->input['action'] == 'add' || $mybb->input['action'] == 'add2')
 	{
 
 
 		if ($mybb->input['action'] == 'add2')
 		{
 
-if ($_REQUEST['distime'] != 0)
-{
-$distime = TIME_NOW + ($_REQUEST['distime']*(60*60));
-}
-				$db->write_query("INSERT IGNORE INTO ".TABLE_PREFIX."mybbirads
+			if ($_REQUEST['distime'] != 0)
+			{
+				$distime = TIME_NOW + ($_REQUEST['distime']*(60*60));
+			}
+			$db->write_query("INSERT IGNORE INTO ".TABLE_PREFIX."mybbirads
 				(title, url, view, maxview, click, maxclick, type, img, distime)
 		VALUES
-			('".$_REQUEST['title']."','".$_REQUEST['url']."','".$_REQUEST['view']."',
-		 	'".$_REQUEST['maxview']."', '".$_REQUEST['click']."', '".$_REQUEST['maxclick']."', '".$_REQUEST['type']."', '".$_REQUEST['img']."', '".$distime."')");
+			('".htmlspecialchars_uni($_REQUEST['title'])."','".htmlspecialchars_uni($_REQUEST['url'])."','".htmlspecialchars_uni($_REQUEST['view'])."',
+		 	'".intval($_REQUEST['maxview'])."', '".intval($_REQUEST['click'])."', '".intval($_REQUEST['maxclick'])."', '".intval($_REQUEST['type'])."', '".htmlspecialchars_uni($_REQUEST['img'])."', '".intval($distime)."')");
 
 
 				admin_redirect("index.php?module=forum/mybbirads");
@@ -325,8 +320,8 @@ $distime = TIME_NOW + ($_REQUEST['distime']*(60*60));
 		}
 
 
-		$page->output_header($lang->add);
-		$page->add_breadcrumb_item($lang->add);
+		$page->output_header($lang->addads);
+		$page->add_breadcrumb_item($lang->addads);
 		$page->output_nav_tabs($tabs, 'mybbirads_add');
 
 
@@ -339,22 +334,22 @@ $distime = TIME_NOW + ($_REQUEST['distime']*(60*60));
 
 
 		$table->construct_cell($lang->subjectads);
-		$table->construct_cell('<input type="text" size="50" name="title" value="' . $_REQUEST['title'] . '" />');
+		$table->construct_cell('<input type="text" size="50" name="title" value="' . htmlspecialchars_uni($_REQUEST['title']) . '" />');
 		$table->construct_row();
 
 		$table->construct_cell($lang->linkads);
-		$table->construct_cell('<input type="text" size="50" name="url" value="' . $_REQUEST['url'] . '" />');
+		$table->construct_cell('<input type="text" size="50" name="url" value="' . htmlspecialchars_uni($_REQUEST['url']) . '" />');
 		$table->construct_row();
 		
 		$table->construct_cell($lang->imgads);
-		$table->construct_cell('<input type="text" size="50" name="img" value="' . $_REQUEST['img'] . '" />');
+		$table->construct_cell('<input type="text" size="50" name="img" value="' . htmlspecialchars_uni($_REQUEST['img']) . '" />');
 		$table->construct_row();
 		
-		$table->construct_cell($lang->adstype);
+		$table->construct_cell($lang->typeads);
 		$table->construct_cell('<select name="type">
 		<option value="1" >'.$lang->headerads.'</option>
 		<option value="2" >'.$lang->footerads.'</option>	
-		<option value="3" >'.$lang->postbit.'/option>		
+		<option value="3" >'.$lang->postbit.'</option>		
 		<option value="4" >'.$lang->pegepeelright.'</option>			
 		<option value="5" >'.$lang->pegepeelleft.'</option>		
 		<option value="6" >'.$lang->topofthreadslist.'</option>		
@@ -367,33 +362,33 @@ $distime = TIME_NOW + ($_REQUEST['distime']*(60*60));
 		$table->construct_row();
 		
 		$table->construct_cell($lang->viewsads);
-		$table->construct_cell('<input type="text" size="50" name="view" value="' . $_REQUEST['view'] . '" />');
+		$table->construct_cell('<input type="text" size="50" name="view" value="' . intval($_REQUEST['view']) . '" />');
 		$table->construct_row();
 
 		$table->construct_cell($lang->maxviewads);
-		$table->construct_cell('<input type="text" size="50" name="maxview" value="' . $_REQUEST['maxview'] . '" />');
+		$table->construct_cell('<input type="text" size="50" name="maxview" value="' . intval($_REQUEST['maxview']) . '" />');
 		$table->construct_row();
 		
 		$table->construct_cell($lang->clicksads);
-		$table->construct_cell('<input type="text" size="50" name="click" value="' . $_REQUEST['click'] . '" />');
+		$table->construct_cell('<input type="text" size="50" name="click" value="' . intval($_REQUEST['click']) . '" />');
 		$table->construct_row();
 		
 		$table->construct_cell($lang->maxclicksads);
-		$table->construct_cell('<input type="text" size="50" name="maxclick" value="' . $_REQUEST['maxclick'] . '" />');
+		$table->construct_cell('<input type="text" size="50" name="maxclick" value="' . intval($_REQUEST['maxclick']) . '" />');
 		$table->construct_row();
 		
 		$table->construct_cell($lang->timerads);
-		$table->construct_cell('<input type="text" size="50" name="distime" value="' . $_REQUEST['distime'] . '" />');
+		$table->construct_cell('<input type="text" size="50" name="distime" value="' . intval($_REQUEST['distime']) . '" />');
 		$table->construct_row();		
 		
 		
 
 
-		$table->construct_cell('<input type="submit" value="'.$lang->add.'" />', array('colspan' => 2));
+		$table->construct_cell('<input type="submit" value="'.$lang->addads.'" />', array('colspan' => 2));
 		$table->construct_row();
 
 		$form->end;
-		$table->output($lang->add);
+		$table->output($lang->addads);
 
 		$page->output_footer();
 	}
@@ -417,15 +412,15 @@ $distime = TIME_NOW + ($_REQUEST['distime']*(60*60));
 
 			if ($_REQUEST['distime'] != 0)
 			{
-				$distime = TIME_NOW + ($_REQUEST['distime']*(60*60));
+				$distime = TIME_NOW + (intval($_REQUEST['distime'])*(60*60));
 			}
 				$db->write_query("
 					UPDATE ".TABLE_PREFIX."mybbirads
 					SET
-							title = '".$_REQUEST['title']."', url = '".$_REQUEST['url']."', enabled = '".$_REQUEST['enabled']."',
-						img = '".$_REQUEST['img']."', view = '".$_REQUEST['view']."', maxview = '".$_REQUEST['maxview']."',
-						click = '".$_REQUEST['click']."',maxclick = '".$_REQUEST['maxclick']."', type = '".$_REQUEST['type']."', distime = '".$distime."'
-					WHERE id = $id LIMIT 1"
+							title = '".htmlspecialchars_uni($_REQUEST['title'])."', url = '".htmlspecialchars_uni($_REQUEST['url'])."', enabled = '".($_REQUEST['enabled']?1:0)."',
+						img = '".htmlspecialchars_uni($_REQUEST['img'])."', view = '".intval($_REQUEST['view'])."', maxview = '".intval($_REQUEST['maxview'])."',
+						click = '".intval($_REQUEST['click'])."',maxclick = '".intval($_REQUEST['maxclick'])."', type = '".intval($_REQUEST['type'])."', distime = '".$distime."'
+					WHERE id = '$id' LIMIT 1"
 
 				);
 
@@ -436,8 +431,8 @@ $distime = TIME_NOW + ($_REQUEST['distime']*(60*60));
 		}
 
 
-		$page->output_header($lang->edit);
-		$page->add_breadcrumb_item($lang->edit);
+		$page->output_header($lang->editads);
+		$page->add_breadcrumb_item($lang->editads);
 		$page->output_nav_tabs($tabs, 'mybbirads');
 
 
@@ -452,15 +447,15 @@ $distime = TIME_NOW + ($_REQUEST['distime']*(60*60));
 	
 
 		$table->construct_cell($lang->subjectads);
-		$table->construct_cell('<input type="text" size="50" name="title" value="' . $adsRow['title'] . '" />');
+		$table->construct_cell('<input type="text" size="50" name="title" value="' . htmlspecialchars_uni($adsRow['title']) . '" />');
 		$table->construct_row();
 
 		$table->construct_cell($lang->linkads);
-		$table->construct_cell('<input type="text" size="50" name="url" value="' . $adsRow['url'] . '" />');
+		$table->construct_cell('<input type="text" size="50" name="url" value="' . htmlspecialchars_uni($adsRow['url']) . '" />');
 		$table->construct_row();
 		
 		$table->construct_cell($lang->imgads);
-		$table->construct_cell('<input type="text" size="50" name="img" value="' . $adsRow['img'] . '" />');
+		$table->construct_cell('<input type="text" size="50" name="img" value="' . htmlspecialchars_uni($adsRow['img']) . '" />');
 		$table->construct_row();
 		if ($adsRow['type'] == 1) {$type1 = "selected";}
 		if ($adsRow['type'] == 2) {$type2 = "selected";}
@@ -490,19 +485,19 @@ $distime = TIME_NOW + ($_REQUEST['distime']*(60*60));
 		$table->construct_row();
 		
 		$table->construct_cell($lang->viewsads);
-		$table->construct_cell('<input type="text" size="50" name="view" value="' . $adsRow['view'] . '" />');
+		$table->construct_cell('<input type="text" size="50" name="view" value="' . intval($adsRow['view']) . '" />');
 		$table->construct_row();
 
 		$table->construct_cell($lang->maxviewads);
-		$table->construct_cell('<input type="text" size="50" name="maxview" value="' . $adsRow['maxview'] . '" />');
+		$table->construct_cell('<input type="text" size="50" name="maxview" value="' . intval($adsRow['maxview']) . '" />');
 		$table->construct_row();
 		
 		$table->construct_cell($lang->clicksads);
-		$table->construct_cell('<input type="text" size="50" name="click" value="' . $adsRow['click'] . '" />');
+		$table->construct_cell('<input type="text" size="50" name="click" value="' . intval($adsRow['click']) . '" />');
 		$table->construct_row();
 		
 		$table->construct_cell($lang->maxclicksads);
-		$table->construct_cell('<input type="text" size="50" name="maxclick" value="' . $adsRow['maxclick'] . '" />');
+		$table->construct_cell('<input type="text" size="50" name="maxclick" value="' . intval($adsRow['maxclick']) . '" />');
 		$table->construct_row();		
 
 		if ($adsRow['distime'] != 0 )
@@ -510,7 +505,7 @@ $distime = TIME_NOW + ($_REQUEST['distime']*(60*60));
 		$distimea = ($adsRow['distime']-TIME_NOW)/(60*60); } else { $distimea = 0;}
 			$distimea = round($distimea, 2);		
 		$table->construct_cell($lang->timerads);
-		$table->construct_cell('<input type="text" size="50" name="distime" value="' . $distimea . '" />');
+		$table->construct_cell('<input type="text" size="50" name="distime" value="' . intval($distimea) . '" />');
 		$table->construct_row();		
 		
 				if ($adsRow['enabled'] == 1) {$enabled1 = "selected";}
@@ -525,12 +520,12 @@ $distime = TIME_NOW + ($_REQUEST['distime']*(60*60));
 		
 
 		$table->construct_cell('
-		<input type="hidden" name="id" value="' . $id . '" />
-		<input type="submit" value="'.$lang->edit.'" />', array('colspan' => 2));
+		<input type="hidden" name="id" value="' . intval($id) . '" />
+		<input type="submit" value="'.$lang->editads.'" />', array('colspan' => 2));
 		$table->construct_row();		
 
 		$form->end;
-		$table->output($lang->edit);
+		$table->output($lang->editads);
 
 		$page->output_footer();
 
@@ -542,7 +537,7 @@ $distime = TIME_NOW + ($_REQUEST['distime']*(60*60));
 	if ($mybb->input['action'] == 'delete')
 	{
 		$id = (int) $_REQUEST['id'];
-		$db->write_query("DELETE FROM ".TABLE_PREFIX."mybbirads  WHERE id = $id
+		$db->write_query("DELETE FROM ".TABLE_PREFIX."mybbirads  WHERE id = '$id'
 				");
 
 		admin_redirect("index.php?module=forum/mybbirads");
@@ -604,15 +599,16 @@ function get_mybbirads($type, $max=0)
 {
 	global $mybb, $db;
 	$showadshead = "";
+	$type = intval($type);
 	if ($db->num_rows($db->query("SELECT * FROM ".TABLE_PREFIX."mybbirads  WHERE type= ".$type." and enabled = 1")) > 0) {
-		$showadshead .= "<table class=\"tborder\"><tr><td class=\"thead\"  colspan=\"".$mybb->settings['showmybbiradsnumberrow']."\">{$lang->ads}</td></tr>";
+		$showadshead .= "<table class=\"tborder\"><tr><td class=\"thead\"  colspan=\"".intval($mybb->settings['showmybbiradsnumberrow'])."\">{$lang->ads}</td></tr>";
 		for ($i = 1 ; $i <= $mybb->settings['showmybbiradsnumbertotal'] ; $i++)
 		{
 			$showadshead .= "<tr>";
 			$querymybbir = $db->query("SELECT * FROM ".TABLE_PREFIX."mybbirads  WHERE type=".$type." and enabled = 1 ORDER BY RAND() LIMIT ".$mybb->settings['showmybbiradsnumberrow']);
 			while($mybbirads = $db->fetch_array($querymybbir))
 			{
-				$showadshead .= "<td class=\"trow1\" align=\"center\"><a href=\"mybbirads.php?id=".$mybbirads['id']."\" target=\"_blank\" title=\"".$mybbirads['title']."\"><img src=\"".$mybbirads['img']."\" alt=\"".$mybbirads['title']."\" /></a></td>";
+				$showadshead .= "<td class=\"trow1\" align=\"center\"><a href=\"mybbirads.php?id=".intval($mybbirads['id'])."\" target=\"_blank\" title=\"".htmlspecialchars_uni($mybbirads['title'])."\"><img src=\"".htmlspecialchars_uni($mybbirads['img'])."\" alt=\"".htmlspecialchars_uni($mybbirads['title'])."\" /></a></td>";
 				$addview = "";
 				$addview = $mybbirads['view']+1;
 				$db->write_query("
@@ -706,7 +702,7 @@ function mybbiradspagepeel()
 
 			.pagepeelright 
 			{
-				background:url(".$mybbirads['img'].") top right;
+				background:url(".htmlspecialchars_uni($mybbirads['img']).") top right;
 				background-size:100px 100px;
 				-moz-background-size:100px 100px; /* Firefox 3.6 */
 				background-repeat:no-repeat;
@@ -724,7 +720,7 @@ function mybbiradspagepeel()
 				-moz-background-size:500px 500px; /* Firefox 3.6 */
 			}
 			</style>
-			<div class=\"pagepeelright\"><a href=\"mybbirads.php?id=".$mybbirads['id']."\" target=\"_blank\" title=\"".$mybbirads['title']."\"></a></div>";
+			<div class=\"pagepeelright\"><a href=\"mybbirads.php?id=".$mybbirads['id']."\" target=\"_blank\" title=\"".htmlspecialchars_uni($mybbirads['title'])."\"></a></div>";
 			$addview = "";
 			$addview = $mybbirads['view']+1;
 			$db->write_query("
