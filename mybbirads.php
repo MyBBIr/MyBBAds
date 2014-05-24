@@ -15,8 +15,11 @@ $query = $db->query("
 	LIMIT 1
 ");
 $ads = $db->fetch_array($query);
-
-	header('Location:'.$ads['url']);
+	if(substr($ads['url'], 0, 7) != 'http://' && substr($ads['url'], 0, 8) != 'https://' && substr($ads['url'], 0, 6) != 'ftp://')
+	{
+		$ads['url'] = 'http://'.$ads['url'];
+	}
+	header('Location: '.$ads['url']);
 	
 $db->write_query("
 		UPDATE ".TABLE_PREFIX."mybbirads
